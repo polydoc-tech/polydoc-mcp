@@ -1,0 +1,41 @@
+{
+  "tool": "polydoc_generate_einvoice",
+  "description": "Generate a ZUGFeRD / EN 16931 hybrid PDF. This invoice is complete: it has paymentTerms (BR-CO-25), a seller taxId for VAT category S, a taxSummary, and totals where net + tax = gross.",
+  "arguments": {
+    "html": "<h1>Invoice INV-2026-001</h1><p>Acme GmbH to Buyer SARL</p>",
+    "standard": "zugferd",
+    "profile": "en16931",
+    "verify": true,
+    "filename": "invoice-zugferd.pdf",
+    "invoice": {
+      "number": "INV-2026-001",
+      "issueDate": "2026-06-04",
+      "dueDate": "2026-07-04",
+      "currencyCode": "EUR",
+      "seller": {
+        "name": "Acme GmbH",
+        "address": { "line1": "Hauptstr. 1", "city": "Berlin", "postalCode": "10115", "countryCode": "DE" },
+        "taxId": "DE123456789"
+      },
+      "buyer": {
+        "name": "Buyer SARL",
+        "address": { "line1": "Rue 2", "city": "Paris", "postalCode": "75001", "countryCode": "FR" }
+      },
+      "lines": [
+        {
+          "description": "Widget",
+          "quantity": 2,
+          "unitPrice": 10,
+          "lineTotal": 20,
+          "vatRate": 19,
+          "vatCategoryCode": "S"
+        }
+      ],
+      "taxSummary": [{ "categoryCode": "S", "rate": 19, "taxableAmount": 20, "taxAmount": 3.8 }],
+      "paymentTerms": "Net 30 days",
+      "totalNetAmount": 20,
+      "totalTaxAmount": 3.8,
+      "totalGrossAmount": 23.8
+    }
+  }
+}

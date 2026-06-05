@@ -1,0 +1,14 @@
+{
+  "tool": "polydoc_screenshot",
+  "description": "Capture a full-page PNG screenshot of a URL. The result is written to disk and previewed inline.",
+  "arguments": {
+    "url": "https://example.com",
+    "screenshotOptions": {
+      "imageType": "png",
+      "fullPage": true,
+      "viewportWidth": 1280,
+      "viewportHeight": 800
+    },
+    "filename": "snapshot.png"
+  }
+}
