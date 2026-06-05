@@ -75,13 +75,17 @@ e-invoice), the direct analog of the n8n connector's three template JSONs.
 - done README with client-config snippets, three angle-split examples, .env.example,
   em-dash scrub, eslint, release.yml authored.
 
-### Pass 4 - publish (todo, needs external coordination)
-- todo Create `polydoc-tech/polydoc-mcp` on GitHub (`gh`), push `main`.
-- todo Confirm the npm name `polydoc-mcp` is free under the `polydoc.tech` account;
-  first manual `npm publish`.
-- todo Configure npm Trusted Publishing for `release.yml` (OIDC, `id-token: write`,
-  npm >= 11.5.1), then release via `v*.*.*` tags. The workflow is authored but not
-  triggered.
+### Pass 4 - publish (in progress)
+- done Create `polydoc-tech/polydoc-mcp` on GitHub (`gh`), push `main` (public,
+  matching the n8n sibling).
+- done First manual `npm publish` of `polydoc-mcp@0.1.0` under the `polydoc.tech`
+  account; verified installable (`npm i polydoc-mcp` links the `polydoc-mcp` bin
+  and the server reports ready on stdio).
+- todo Configure npm Trusted Publishing on npmjs.com for `release.yml` (GitHub
+  Actions, org `polydoc-tech`, repo `polydoc-mcp`, workflow `release.yml`, npm
+  >= 11.5.1). Until then do not push a `v*.*.*` tag: the authored workflow would
+  run without OIDC configured and fail. After it is set up, release via
+  `npm version patch && git push --follow-tags`.
 
 ---
 
