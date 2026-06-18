@@ -145,4 +145,16 @@ describe('mergeDeep', () => {
   it('overwrites scalars and arrays', () => {
     expect(mergeDeep({ a: 1, list: [1, 2] }, { a: 9, list: [3] })).toEqual({ a: 9, list: [3] })
   })
+
+  it('ignores prototype-pollution keys in the source', () => {
+    const malicious = JSON.parse(
+      '{"__proto__":{"polluted":"yes"},"constructor":{"polluted":"yes"},"safe":"kept"}',
+    )
+    const merged = mergeDeep({ existing: 1 }, malicious) as Record<string, unknown>
+    expect(merged.safe).toBe('kept')
+    expect(merged.existing).toBe(1)
+    expect(Object.getPrototypeOf(merged)).toBe(Object.prototype)
+    expect(merged.polluted).toBeUndefined()
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+  })
 })
