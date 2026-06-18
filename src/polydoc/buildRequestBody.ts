@@ -56,6 +56,8 @@ function isPlainObject(value: unknown): value is Bag {
 export function mergeDeep(target: Bag, source: Bag): Bag {
   const out: Bag = { ...target }
   for (const [key, value] of Object.entries(source)) {
+    // The advanced JSON is user-supplied; skip prototype-pollution keys.
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue
     if (isPlainObject(value) && isPlainObject(out[key])) {
       out[key] = mergeDeep(out[key] as Bag, value)
     } else {
