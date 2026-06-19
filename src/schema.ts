@@ -79,7 +79,7 @@ export const commonExtrasShape = {
     .record(z.string(), z.unknown())
     .optional()
     .describe(
-      'Raw fields deep-merged into the request body for any API option not exposed here (e.g. pdf.watermark, render, request).'
+      'Raw fields deep-merged into the request body for any API option not exposed here (e.g. pdf.watermark, pdf.pdfa, pdf.ua, render, request).'
     ),
   returnBase64: z
     .boolean()
