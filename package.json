@@ -1,6 +1,6 @@
 {
   "name": "polydoc-mcp",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "PolyDoc MCP server: HTML/URL to PDF, screenshots, and EU e-invoices (Factur-X / ZUGFeRD) for MCP clients.",
   "license": "MIT",
   "type": "module",
