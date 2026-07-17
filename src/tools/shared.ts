@@ -8,7 +8,7 @@ import {
 } from '../polydoc/buildRequestBody.js'
 import type { ConvertFn, ConvertResult } from '../polydoc/client.js'
 import type { Config } from '../polydoc/config.js'
-import { PolyDocApiError, UserInputError } from '../polydoc/errors.js'
+import { PolyDocApiError, PolyDocTimeoutError, UserInputError } from '../polydoc/errors.js'
 import { SCREENSHOT_INLINE_MAX_BYTES, type WriteFileFn } from '../polydoc/output.js'
 import type { ConversionInput } from '../schema.js'
 
@@ -176,6 +176,7 @@ export async function runConversion(
     }
   } catch (err) {
     if (err instanceof UserInputError) return errorResult(err.message)
+    if (err instanceof PolyDocTimeoutError) return errorResult(err.message)
     if (err instanceof PolyDocApiError) {
       return errorResult(`PolyDoc API error ${err.status}: ${err.message}`)
     }
@@ -216,6 +217,9 @@ export async function runTestCredentials(deps: ConversionDeps): Promise<CallTool
     })
     return reply({ ok: true, status: 200, message: 'PolyDoc credentials valid; the API key was accepted.' })
   } catch (err) {
+    if (err instanceof PolyDocTimeoutError) {
+      return reply({ ok: false, status: 0, message: err.message })
+    }
     if (err instanceof PolyDocApiError) {
       const message =
         err.status === 401

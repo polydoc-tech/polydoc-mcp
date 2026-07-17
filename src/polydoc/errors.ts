@@ -6,6 +6,20 @@ export class UserInputError extends Error {
   }
 }
 
+/** Raised when a request exceeds its timeout budget with no response. */
+export class PolyDocTimeoutError extends Error {
+  readonly timeoutMs: number
+
+  constructor(timeoutMs: number) {
+    super(
+      `PolyDoc request timed out after ${Math.round(timeoutMs / 1000)}s with no response. ` +
+        'The API may be unreachable, or the conversion is taking longer than the client allows.'
+    )
+    this.name = 'PolyDocTimeoutError'
+    this.timeoutMs = timeoutMs
+  }
+}
+
 /** Raised when the PolyDoc API returns a non-2xx response. */
 export class PolyDocApiError extends Error {
   readonly status: number
