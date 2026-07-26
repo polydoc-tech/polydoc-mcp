@@ -1,0 +1,46 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "tech.polydoc/polydoc-mcp",
+  "description": "PolyDoc MCP server: HTML/URL to PDF, screenshots, and EU e-invoice generation for MCP clients.",
+  "title": "PolyDoc",
+  "websiteUrl": "https://polydoc.tech",
+  "repository": {
+    "url": "https://github.com/polydoc-tech/polydoc-mcp",
+    "source": "github"
+  },
+  "version": "0.1.4",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "polydoc-mcp",
+      "version": "0.1.4",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "POLYDOC_API_KEY",
+          "description": "API key from dashboard.polydoc.tech.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "POLYDOC_SANDBOX",
+          "description": "Default sandbox mode (watermarked, does not use production quota). A tool call can override per request. Defaults to false.",
+          "isRequired": false
+        },
+        {
+          "name": "POLYDOC_BASE_URL",
+          "description": "Override for self-hosted or staging use. Defaults to https://api.polydoc.tech.",
+          "isRequired": false
+        },
+        {
+          "name": "POLYDOC_OUTPUT_DIR",
+          "description": "Directory downloads are written to. Defaults to the OS temp dir + /polydoc.",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}
