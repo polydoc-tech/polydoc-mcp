@@ -25,7 +25,7 @@ export interface PolyDocParams {
   filename?: string
   tag?: string
   timeout?: number
-  /** PDF option bag: format, landscape, printBackground, scale, pageRanges, outline, tagged, margin* */
+  /** PDF option bag: format, landscape, printBackground, scale, pageRanges, outline, tagged, margin*, pdfa, pdfua */
   pdfOptions?: Bag
   /** Screenshot option bag: imageType, fullPage, quality, encoding, viewport{Width,Height}, devicePixelRatio */
   screenshotOptions?: Bag
@@ -102,6 +102,15 @@ function buildLayout(opts: Bag): Bag | undefined {
   return Object.keys(layout).length > 0 ? layout : undefined
 }
 
+/** Conformance targets live under `pdf`, not `layout`. */
+function buildPdfConformance(opts: Bag): Bag | undefined {
+  const pdf: Bag = {}
+  for (const target of ['pdfa', 'pdfua'] as const) {
+    if (isPlainObject(opts[target])) pdf[target] = opts[target]
+  }
+  return Object.keys(pdf).length > 0 ? pdf : undefined
+}
+
 function buildScreenshot(opts: Bag): Bag | undefined {
   const shot: Bag = {}
   if (typeof opts.imageType === 'string' && opts.imageType !== '') shot.type = opts.imageType
@@ -135,6 +144,8 @@ export function buildRequestBody(params: PolyDocParams): PolyDocRequest {
   if (params.operation === 'pdf') {
     const layout = params.pdfOptions ? buildLayout(params.pdfOptions) : undefined
     if (layout) body.layout = layout
+    const pdf = params.pdfOptions ? buildPdfConformance(params.pdfOptions) : undefined
+    if (pdf) body.pdf = pdf
   }
 
   if (params.operation === 'screenshot') {

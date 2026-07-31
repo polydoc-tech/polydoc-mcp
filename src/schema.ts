@@ -11,6 +11,7 @@ export const PAGE_FORMATS = [
 ] as const
 
 export const IMAGE_TYPES = ['png', 'jpeg', 'webp'] as const
+export const PDFA_LEVELS = ['1b', '2b', '3b'] as const
 export const EINVOICE_STANDARDS = ['zugferd', 'facturx'] as const
 export const EINVOICE_PROFILES = ['minimum', 'basicwl', 'basic', 'en16931', 'extended'] as const
 
@@ -79,7 +80,7 @@ export const commonExtrasShape = {
     .record(z.string(), z.unknown())
     .optional()
     .describe(
-      'Raw fields deep-merged into the request body for any API option not exposed here (e.g. pdf.watermark, pdf.pdfa, pdf.pdfua, render, request).'
+      'Raw fields deep-merged into the request body for any API option not exposed here (e.g. pdf.watermark, render, request).'
     ),
   returnBase64: z
     .boolean()
@@ -100,9 +101,30 @@ export const pdfOptionsSchema = z
     marginRight: z.string().optional(),
     marginBottom: z.string().optional(),
     marginLeft: z.string().optional(),
+    pdfa: z
+      .object({
+        level: z.enum(PDFA_LEVELS).describe('Archival target. Use "3b" unless a downstream system requires "2b" or "1b".'),
+        verify: z
+          .boolean()
+          .optional()
+          .describe('Validate the output with veraPDF and fail the request (422) if it does not conform.'),
+      })
+      .optional()
+      .describe('Produce archivable PDF/A output. Best-effort unless verify is set.'),
+    pdfua: z
+      .object({
+        verify: z
+          .boolean()
+          .optional()
+          .describe('Validate the output with veraPDF and fail the request (422) if it does not conform.'),
+      })
+      .optional()
+      .describe(
+        'Produce accessible PDF/UA-1 (ISO 14289-1) output; forces a tagged render. Best-effort unless verify is set.'
+      ),
   })
   .optional()
-  .describe('Page layout options.')
+  .describe('Page layout and PDF conformance options.')
 
 export const screenshotOptionsSchema = z
   .object({
