@@ -1,20 +1,20 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "tech.polydoc/polydoc-mcp",
-  "description": "PolyDoc MCP server: HTML/URL to PDF, screenshots, and EU e-invoice generation for MCP clients.",
+  "description": "HTML/URL to PDF, screenshots, e-invoices. PDF/A and PDF/UA output with optional veraPDF verify.",
   "title": "PolyDoc",
   "websiteUrl": "https://polydoc.tech",
   "repository": {
     "url": "https://github.com/polydoc-tech/polydoc-mcp",
     "source": "github"
   },
-  "version": "0.1.4",
+  "version": "0.1.5",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "polydoc-mcp",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "transport": {
         "type": "stdio"
       },

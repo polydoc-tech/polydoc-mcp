@@ -2,9 +2,11 @@
 
 An [MCP](https://modelcontextprotocol.io) server for [PolyDoc](https://polydoc.tech), a REST API that converts HTML or URLs to **PDF**, captures **screenshots**, and generates EU-compliant **e-invoices** (Factur-X / ZUGFeRD hybrid PDF/A-3). It lets MCP clients (Claude Desktop, Claude Code, Cursor, and others) drive PolyDoc directly.
 
+PDF output can target **PDF/A** (archival) and **PDF/UA-1** (accessible, ISO 14289-1). Both are best-effort by default; set `verify` on either to validate the result with veraPDF and fail the request instead of returning a non-conforming file.
+
 ## Tools
 
-- **`polydoc_html_to_pdf`** - HTML, URL, or saved template to PDF (layout, margins, page format, page ranges, bookmarks, accessible/tagged PDFs).
+- **`polydoc_html_to_pdf`** - HTML, URL, or saved template to PDF (layout, margins, page format, page ranges, bookmarks, tagged PDFs, PDF/A and PDF/UA conformance).
 - **`polydoc_screenshot`** - HTML, URL, or template to PNG / JPEG / WebP, with viewport and device-pixel-ratio control. Returns an inline image preview when small enough.
 - **`polydoc_generate_einvoice`** - Factur-X or ZUGFeRD hybrid PDF/A-3 from structured invoice data, profiles from `minimum` to `extended`.
 - **`polydoc_test_credentials`** - verify the configured API key with a minimal sandbox render (never draws production quota).
@@ -66,6 +68,23 @@ Add to `~/.cursor/mcp.json` (or a project `.cursor/mcp.json`) using the same `mc
 - **Download** (default): the file is written under `POLYDOC_OUTPUT_DIR` and the absolute path is returned with metadata (size, conversion id, credits). Screenshots also return an inline image block. Pass `returnBase64: true` to also receive the bytes as base64 (heavy; for clients without a filesystem).
 - **Cloud storage**: set `delivery: "cloudStorage"` and `presignedUrl`. The upload URL is returned.
 - **Webhook**: set `delivery: "webhook"` and a `webhook` object (`{ url, async?, method?, headers? }`).
+
+## PDF/A and PDF/UA
+
+`polydoc_html_to_pdf` takes two conformance targets inside `pdfOptions`:
+
+```json
+{
+  "pdfOptions": {
+    "pdfa": { "level": "3b", "verify": true },
+    "pdfua": { "verify": true }
+  }
+}
+```
+
+`pdfa.level` is `1b`, `2b`, or `3b`. Setting `pdfua` forces a tagged render, so you do not need `tagged` as well.
+
+Without `verify`, output is best-effort: it targets the standard but the request still succeeds if the toolchain cannot satisfy every machine-checkable rule. With `verify: true`, veraPDF validates the result and a non-conforming file fails with **422** instead of being returned. Use it when a downstream system will reject a bad file anyway.
 
 ## Anything not in a tool's schema?
 

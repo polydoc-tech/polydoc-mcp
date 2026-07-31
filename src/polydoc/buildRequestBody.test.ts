@@ -129,6 +129,42 @@ describe('buildRequestBody', () => {
     expect(r.body.layout).toEqual({ format: 'A4', landscape: true })
   })
 
+  it('routes pdfa and pdfua to body.pdf, not body.layout', () => {
+    const r = buildRequestBody(
+      base({
+        pdfOptions: {
+          format: 'A4',
+          pdfa: { level: '3b', verify: true },
+          pdfua: { verify: true },
+        },
+      })
+    )
+    expect(r.body.pdf).toEqual({ pdfa: { level: '3b', verify: true }, pdfua: { verify: true } })
+    expect(r.body.layout).toEqual({ format: 'A4' })
+  })
+
+  it('omits body.pdf when no conformance target is requested', () => {
+    const r = buildRequestBody(base({ pdfOptions: { format: 'A4', tagged: true } }))
+    expect(r.body.pdf).toBeUndefined()
+  })
+
+  it('does not emit conformance targets for screenshots', () => {
+    const r = buildRequestBody(
+      base({ operation: 'screenshot', pdfOptions: { pdfua: { verify: true } } })
+    )
+    expect(r.body.pdf).toBeUndefined()
+  })
+
+  it('advanced still overrides a conformance target set through options', () => {
+    const r = buildRequestBody(
+      base({
+        pdfOptions: { pdfa: { level: '3b' } },
+        advanced: { pdf: { pdfa: { level: '2b' } } },
+      })
+    )
+    expect((r.body.pdf as Record<string, unknown>).pdfa).toEqual({ level: '2b' })
+  })
+
   it('includes filename, tag and positive timeout when provided', () => {
     const r = buildRequestBody(base({ filename: 'out.pdf', tag: 'run1', timeout: 60000 }))
     expect(r.body.filename).toBe('out.pdf')

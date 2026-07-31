@@ -1,7 +1,7 @@
 {
   "name": "polydoc-mcp",
-  "version": "0.1.4",
-  "description": "PolyDoc MCP server: HTML/URL to PDF, screenshots, and EU e-invoices (Factur-X / ZUGFeRD) for MCP clients.",
+  "version": "0.1.5",
+  "description": "PolyDoc MCP server: HTML/URL to PDF, screenshots, and EU e-invoices, with best-effort PDF/A and PDF/UA output and an optional veraPDF verify step that fails non-conforming files.",
   "mcpName": "tech.polydoc/polydoc-mcp",
   "license": "MIT",
   "type": "module",
@@ -24,6 +24,11 @@
     "pdf",
     "html-to-pdf",
     "screenshot",
+    "pdf-a",
+    "pdf-ua",
+    "tagged-pdf",
+    "accessibility",
+    "verapdf",
     "e-invoice",
     "factur-x",
     "zugferd"
