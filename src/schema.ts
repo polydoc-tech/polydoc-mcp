@@ -204,7 +204,11 @@ export const invoiceSchema = z
     totalTaxAmount: z.number(),
     totalGrossAmount: z.number().describe('Must equal totalNetAmount + totalTaxAmount.'),
     note: z.string().optional(),
-    buyerReference: z.string().optional(),
+    buyerReference: z
+      .string()
+      .optional()
+      .describe('Buyer reference (BT-10), e.g. the Leitweg-ID for German public-sector invoices.'),
+    orderReference: z.string().optional().describe('Purchase order number (BT-13).'),
   })
   .describe('Structured invoice data embedded as ZUGFeRD / Factur-X XML.')
 
