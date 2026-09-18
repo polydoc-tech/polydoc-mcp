@@ -92,6 +92,46 @@ describe('PolyDoc MCP server (in-memory round-trip)', () => {
     await client.close()
   })
 
+  it('forwards buyerReference (BT-10) and orderReference (BT-13) to the API', async () => {
+    const requests: Parameters<ConvertFn>[0][] = []
+    const client = await connect(async (request, opts) => {
+      requests.push(request)
+      return fakeConvert(request, opts)
+    })
+    const res = await client.callTool({
+      name: 'polydoc_generate_einvoice',
+      arguments: {
+        html: '<h1>INV-1</h1>',
+        invoice: {
+          number: 'INV-1',
+          issueDate: '2026-09-18',
+          dueDate: '2026-10-18',
+          currencyCode: 'EUR',
+          seller: {
+            name: 'Acme GmbH',
+            address: { line1: 'Hauptstr. 1', city: 'Berlin', postalCode: '10115', countryCode: 'DE' },
+          },
+          buyer: {
+            name: 'Buyer SARL',
+            address: { line1: 'Rue 2', city: 'Paris', postalCode: '75001', countryCode: 'FR' },
+          },
+          lines: [{ description: 'Widget', quantity: 1, unitPrice: 10, lineTotal: 10 }],
+          totalNetAmount: 10,
+          totalTaxAmount: 0,
+          totalGrossAmount: 10,
+          buyerReference: 'LEITWEG-1',
+          orderReference: '4500012345',
+        },
+      },
+    })
+    expect(res.isError).toBeFalsy()
+    expect(requests).toHaveLength(1)
+    const body = requests[0].body as { eInvoice: { invoice: Record<string, unknown> } }
+    expect(body.eInvoice.invoice.buyerReference).toBe('LEITWEG-1')
+    expect(body.eInvoice.invoice.orderReference).toBe('4500012345')
+    await client.close()
+  })
+
   it('runs test_credentials and reports ok', async () => {
     const client = await connect()
     const res = await client.callTool({ name: 'polydoc_test_credentials', arguments: {} })
