@@ -132,6 +132,85 @@ describe('PolyDoc MCP server (in-memory round-trip)', () => {
     await client.close()
   })
 
+  it('forwards contactName (BT-41/56), electronicAddress (BT-34/49) and buyerItemId (BT-156)', async () => {
+    const requests: Parameters<ConvertFn>[0][] = []
+    const client = await connect(async (request, opts) => {
+      requests.push(request)
+      return fakeConvert(request, opts)
+    })
+    const res = await client.callTool({
+      name: 'polydoc_generate_einvoice',
+      arguments: {
+        html: '<h1>INV-2</h1>',
+        invoice: {
+          number: 'INV-2',
+          issueDate: '2026-09-20',
+          dueDate: '2026-10-20',
+          currencyCode: 'EUR',
+          seller: {
+            name: 'Acme GmbH',
+            address: { line1: 'Hauptstr. 1', city: 'Berlin', postalCode: '10115', countryCode: 'DE' },
+            contactName: 'Billing Department',
+            electronicAddress: { schemeId: '0088', id: '4004301000005' },
+          },
+          buyer: {
+            name: 'Buyer SARL',
+            address: { line1: 'Rue 2', city: 'Paris', postalCode: '75001', countryCode: 'FR' },
+            contactName: 'Accounts Payable',
+            electronicAddress: { schemeId: 'EM', id: 'invoices@buyer.example' },
+          },
+          lines: [{ description: 'Widget', buyerItemId: 'ART-4711', quantity: 1, unitPrice: 10, lineTotal: 10 }],
+          totalNetAmount: 10,
+          totalTaxAmount: 0,
+          totalGrossAmount: 10,
+        },
+      },
+    })
+    expect(res.isError).toBeFalsy()
+    expect(requests).toHaveLength(1)
+    const invoice = (requests[0].body as { eInvoice: { invoice: Record<string, never> } }).eInvoice.invoice
+    const seller = invoice.seller as unknown as Record<string, unknown>
+    const buyer = invoice.buyer as unknown as Record<string, unknown>
+    const lines = invoice.lines as unknown as Record<string, unknown>[]
+    expect(seller.contactName).toBe('Billing Department')
+    expect(seller.electronicAddress).toEqual({ schemeId: '0088', id: '4004301000005' })
+    expect(buyer.contactName).toBe('Accounts Payable')
+    expect(buyer.electronicAddress).toEqual({ schemeId: 'EM', id: 'invoices@buyer.example' })
+    expect(lines[0].buyerItemId).toBe('ART-4711')
+    await client.close()
+  })
+
+  it('rejects the retired minimum profile', async () => {
+    const client = await connect()
+    const res = await client.callTool({
+      name: 'polydoc_generate_einvoice',
+      arguments: {
+        html: '<h1>INV-3</h1>',
+        profile: 'minimum',
+        invoice: {
+          number: 'INV-3',
+          issueDate: '2026-09-20',
+          dueDate: '2026-10-20',
+          currencyCode: 'EUR',
+          seller: {
+            name: 'Acme GmbH',
+            address: { line1: 'Hauptstr. 1', city: 'Berlin', postalCode: '10115', countryCode: 'DE' },
+          },
+          buyer: {
+            name: 'Buyer SARL',
+            address: { line1: 'Rue 2', city: 'Paris', postalCode: '75001', countryCode: 'FR' },
+          },
+          lines: [{ description: 'Widget', quantity: 1, unitPrice: 10, lineTotal: 10 }],
+          totalNetAmount: 10,
+          totalTaxAmount: 0,
+          totalGrossAmount: 10,
+        },
+      },
+    })
+    expect(res.isError).toBe(true)
+    await client.close()
+  })
+
   it('runs test_credentials and reports ok', async () => {
     const client = await connect()
     const res = await client.callTool({ name: 'polydoc_test_credentials', arguments: {} })

@@ -8,7 +8,7 @@ PDF output can target **PDF/A** (archival) and **PDF/UA-1** (accessible, ISO 142
 
 - **`polydoc_html_to_pdf`** - HTML, URL, or saved template to PDF (layout, margins, page format, page ranges, bookmarks, tagged PDFs, PDF/A and PDF/UA conformance).
 - **`polydoc_screenshot`** - HTML, URL, or template to PNG / JPEG / WebP, with viewport and device-pixel-ratio control. Returns an inline image preview when small enough.
-- **`polydoc_generate_einvoice`** - Factur-X or ZUGFeRD hybrid PDF/A-3 from structured invoice data, profiles from `minimum` to `extended`.
+- **`polydoc_generate_einvoice`** - Factur-X or ZUGFeRD hybrid PDF/A-3 from structured invoice data, profiles `basic`, `en16931` and `extended`.
 - **`polydoc_test_credentials`** - verify the configured API key with a minimal sandbox render (never draws production quota).
 
 Content can come from a **URL**, an inline **HTML** string, or a saved **template** (with Liquid `templateData`). Downloads are written to a local directory and the file path is returned; you can also deliver to your **cloud storage** (presigned URL) or a **webhook**.

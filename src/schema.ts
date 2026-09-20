@@ -13,7 +13,9 @@ export const PAGE_FORMATS = [
 export const IMAGE_TYPES = ['png', 'jpeg', 'webp'] as const
 export const PDFA_LEVELS = ['1b', '2b', '3b'] as const
 export const EINVOICE_STANDARDS = ['zugferd', 'facturx'] as const
-export const EINVOICE_PROFILES = ['minimum', 'basicwl', 'basic', 'en16931', 'extended'] as const
+// `minimum` and `basicwl` were removed from the API in 2026-09: neither carries invoice lines,
+// which EN 16931 requires (BR-16), and PolyDoc answers both with 400.
+export const EINVOICE_PROFILES = ['basic', 'en16931', 'extended'] as const
 
 /** Source selection plus optional template variables, shared by every tool. */
 export const sourceShape = {
@@ -146,6 +148,13 @@ const addressSchema = z.object({
   countryCode: z.string().describe('ISO 3166-1 alpha-2, e.g. DE.'),
 })
 
+const electronicAddressSchema = z.object({
+  schemeId: z
+    .string()
+    .describe('CEF EAS code list value, e.g. "0088" (GLN), "0204" (Leitweg-ID), "EM" (email). An unlisted value is rejected with 422 (BR-CL-25).'),
+  id: z.string().describe('The address itself, e.g. a GLN or an email address.'),
+})
+
 const partySchema = z.object({
   name: z.string(),
   address: addressSchema,
@@ -153,12 +162,25 @@ const partySchema = z.object({
     .string()
     .optional()
     .describe('VAT ID. Required for the seller when a line uses VAT category S.'),
-  email: z.string().optional(),
-  phone: z.string().optional(),
+  email: z.string().optional().describe('Contact email (BT-43 seller, BT-58 buyer). Profile en16931 or extended only.'),
+  phone: z.string().optional().describe('Contact phone (BT-42 seller, BT-57 buyer). Profile en16931 or extended only.'),
+  contactName: z
+    .string()
+    .optional()
+    .describe('Contact person (BT-41 seller, BT-56 buyer). Profile en16931 or extended only.'),
+  electronicAddress: electronicAddressSchema
+    .optional()
+    .describe(
+      'Electronic address the party receives invoices at (BT-34 seller, BT-49 buyer). Reaches the XML at every profile.',
+    ),
 })
 
 const invoiceLineSchema = z.object({
-  description: z.string(),
+  description: z.string().describe('Item name (BT-153).'),
+  buyerItemId: z
+    .string()
+    .optional()
+    .describe("The buyer's own article number for this item (BT-156). Profile en16931 or extended only."),
   quantity: z.number(),
   unitCode: z.string().optional(),
   unitPrice: z.number(),
