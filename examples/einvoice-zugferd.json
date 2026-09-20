@@ -15,15 +15,19 @@
       "seller": {
         "name": "Acme GmbH",
         "address": { "line1": "Hauptstr. 1", "city": "Berlin", "postalCode": "10115", "countryCode": "DE" },
-        "taxId": "DE123456789"
+        "taxId": "DE123456789",
+        "contactName": "Billing Department",
+        "electronicAddress": { "schemeId": "0088", "id": "4004301000005" }
       },
       "buyer": {
         "name": "Buyer SARL",
-        "address": { "line1": "Rue 2", "city": "Paris", "postalCode": "75001", "countryCode": "FR" }
+        "address": { "line1": "Rue 2", "city": "Paris", "postalCode": "75001", "countryCode": "FR" },
+        "electronicAddress": { "schemeId": "EM", "id": "invoices@buyer.example" }
       },
       "lines": [
         {
           "description": "Widget",
+          "buyerItemId": "ART-4711",
           "quantity": 2,
           "unitPrice": 10,
           "lineTotal": 20,
