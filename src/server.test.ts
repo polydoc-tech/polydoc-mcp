@@ -180,6 +180,96 @@ describe('PolyDoc MCP server (in-memory round-trip)', () => {
     await client.close()
   })
 
+  it('forwards deliverTo (BT-70, BG-15) and deliveryDate (BT-72)', async () => {
+    const requests: Parameters<ConvertFn>[0][] = []
+    const client = await connect(async (request, opts) => {
+      requests.push(request)
+      return fakeConvert(request, opts)
+    })
+    const deliverTo = {
+      name: 'Acme Warehouse North',
+      address: {
+        line1: 'Lagerstr. 7',
+        line2: 'Tor 3',
+        city: 'Hamburg',
+        postalCode: '20095',
+        countryCode: 'DE',
+      },
+    }
+    const res = await client.callTool({
+      name: 'polydoc_generate_einvoice',
+      arguments: {
+        html: '<h1>INV-4</h1>',
+        invoice: {
+          number: 'INV-4',
+          issueDate: '2026-09-24',
+          dueDate: '2026-10-24',
+          deliveryDate: '2026-09-22',
+          currencyCode: 'EUR',
+          seller: {
+            name: 'Acme GmbH',
+            address: { line1: 'Hauptstr. 1', city: 'Berlin', postalCode: '10115', countryCode: 'DE' },
+          },
+          buyer: {
+            name: 'Buyer SARL',
+            address: { line1: 'Rue 2', city: 'Paris', postalCode: '75001', countryCode: 'FR' },
+          },
+          deliverTo,
+          lines: [{ description: 'Widget', quantity: 1, unitPrice: 10, lineTotal: 10 }],
+          totalNetAmount: 10,
+          totalTaxAmount: 0,
+          totalGrossAmount: 10,
+        },
+      },
+    })
+    expect(res.isError).toBeFalsy()
+    expect(requests).toHaveLength(1)
+    const invoice = (requests[0].body as { eInvoice: { invoice: Record<string, unknown> } }).eInvoice.invoice
+    expect(invoice.deliverTo).toEqual(deliverTo)
+    expect(invoice.deliveryDate).toBe('2026-09-22')
+    await client.close()
+  })
+
+  it('rejects a deliverTo address without countryCode (BR-57)', async () => {
+    const requests: Parameters<ConvertFn>[0][] = []
+    const client = await connect(async (request, opts) => {
+      requests.push(request)
+      return fakeConvert(request, opts)
+    })
+    const res = await client.callTool({
+      name: 'polydoc_generate_einvoice',
+      arguments: {
+        html: '<h1>INV-5</h1>',
+        invoice: {
+          number: 'INV-5',
+          issueDate: '2026-09-24',
+          dueDate: '2026-10-24',
+          currencyCode: 'EUR',
+          seller: {
+            name: 'Acme GmbH',
+            address: { line1: 'Hauptstr. 1', city: 'Berlin', postalCode: '10115', countryCode: 'DE' },
+          },
+          buyer: {
+            name: 'Buyer SARL',
+            address: { line1: 'Rue 2', city: 'Paris', postalCode: '75001', countryCode: 'FR' },
+          },
+          deliverTo: { name: 'Acme Warehouse North', address: { line1: 'Lagerstr. 7', city: 'Hamburg' } },
+          lines: [{ description: 'Widget', quantity: 1, unitPrice: 10, lineTotal: 10 }],
+          totalNetAmount: 10,
+          totalTaxAmount: 0,
+          totalGrossAmount: 10,
+        },
+      },
+    })
+    expect(res.isError).toBe(true)
+    const text = (res.content as Array<{ type: string; text?: string }>)
+      .map((c) => c.text ?? '')
+      .join(' ')
+    expect(text).toMatch(/countryCode/)
+    expect(requests).toHaveLength(0)
+    await client.close()
+  })
+
   it('rejects the retired minimum profile', async () => {
     const client = await connect()
     const res = await client.callTool({
