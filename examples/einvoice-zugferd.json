@@ -11,6 +11,7 @@
       "number": "INV-2026-001",
       "issueDate": "2026-06-04",
       "dueDate": "2026-07-04",
+      "deliveryDate": "2026-06-02",
       "currencyCode": "EUR",
       "seller": {
         "name": "Acme GmbH",
@@ -23,6 +24,10 @@
         "name": "Buyer SARL",
         "address": { "line1": "Rue 2", "city": "Paris", "postalCode": "75001", "countryCode": "FR" },
         "electronicAddress": { "schemeId": "EM", "id": "invoices@buyer.example" }
+      },
+      "deliverTo": {
+        "name": "Buyer SARL, Entrepot Nord",
+        "address": { "line1": "Rue du Port 8", "city": "Lille", "postalCode": "59000", "countryCode": "FR" }
       },
       "lines": [
         {
