@@ -175,6 +175,21 @@ const partySchema = z.object({
     ),
 })
 
+// Unlike the party address, only the country is required: BR-57 makes BT-80 mandatory whenever a
+// deliver-to address is present, and EN 16931 leaves the rest optional.
+const deliveryAddressSchema = z.object({
+  line1: z.string().optional().describe('Street and house number (BT-75).'),
+  line2: z.string().optional().describe('Additional address line (BT-76).'),
+  city: z.string().optional().describe('City (BT-77).'),
+  postalCode: z.string().optional().describe('Post code (BT-78).'),
+  countryCode: z.string().describe('ISO 3166-1 alpha-2, e.g. DE (BT-80). Required whenever address is sent (BR-57).'),
+})
+
+const deliverToSchema = z.object({
+  name: z.string().optional().describe('Deliver-to party name (BT-70).'),
+  address: deliveryAddressSchema.optional().describe('Deliver-to address (BG-15).'),
+})
+
 const invoiceLineSchema = z.object({
   description: z.string().describe('Item name (BT-153).'),
   buyerItemId: z
@@ -212,9 +227,16 @@ export const invoiceSchema = z
       .string()
       .optional()
       .describe('ISO date. EN 16931 needs dueDate or paymentTerms (rule BR-CO-25).'),
+    deliveryDate: z
+      .string()
+      .optional()
+      .describe('Actual delivery date (BT-72), ISO date YYYY-MM-DD. When omitted, issueDate is written as the delivery date.'),
     currencyCode: z.string().describe('ISO 4217, 3 letters, e.g. EUR.'),
     seller: partySchema,
     buyer: partySchema,
+    deliverTo: deliverToSchema
+      .optional()
+      .describe('Where the goods or services are delivered, when that differs from the buyer (BG-13). Reaches the XML at every profile. An empty object writes nothing.'),
     lines: z.array(invoiceLineSchema).min(1),
     taxSummary: z
       .array(taxSummarySchema)
