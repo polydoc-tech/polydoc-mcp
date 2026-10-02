@@ -3,7 +3,7 @@
 # Org rule: no em-dashes in published / customer-facing text.
 set -euo pipefail
 
-targets=(src README.md ROADMAP.md examples)
+targets=(src README.md examples)
 existing=()
 for t in "${targets[@]}"; do
   [ -e "$t" ] && existing+=("$t")
