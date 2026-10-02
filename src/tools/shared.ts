@@ -191,7 +191,7 @@ export interface TestCredentialsResult {
 }
 
 /**
- * The playbook's mandatory credential test: a minimal screenshot forced to
+ * The credential test: a minimal screenshot forced to
  * sandbox so it never draws production quota. Reports validity rather than
  * throwing, so an invalid key is a normal (non-error) result.
  */
