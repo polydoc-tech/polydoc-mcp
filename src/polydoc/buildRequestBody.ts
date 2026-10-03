@@ -2,8 +2,7 @@
  * Pure assembly of the PolyDoc request body from resolved tool params. No I/O and
  * no MCP references, so it is unit-testable in isolation and stays the single
  * source of truth for the request shape across all tools. Ported from the n8n
- * connector's GenericFunctions.buildRequestBody (the framework-agnostic asset the
- * connector playbook is built around).
+ * connector's GenericFunctions.buildRequestBody, its framework-agnostic part.
  */
 
 export type PolyDocOperation = 'pdf' | 'screenshot' | 'einvoice'
