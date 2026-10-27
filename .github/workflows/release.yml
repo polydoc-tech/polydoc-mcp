@@ -21,7 +21,7 @@ jobs:
       # default registry.
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Upgrade npm (Trusted Publishing needs >= 11.5.1)
         run: npm install -g npm@latest
