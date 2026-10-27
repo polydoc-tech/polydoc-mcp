@@ -324,7 +324,31 @@ describe('PolyDoc MCP server (in-memory round-trip)', () => {
     await client.close()
   })
 
-  it('rejects a document-level allowance without vatCategoryCode (BR-32)', async () => {
+  it.each([
+    [
+      'a document-level allowance without vatCategoryCode (BR-32)',
+      {
+        lines: [{ description: 'Widget', quantity: 1, unitPrice: 24, lineTotal: 24 }],
+        allowances: [{ amount: 1, reason: 'Early order', vatRate: 19 }],
+      },
+      /vatCategoryCode/,
+    ],
+    [
+      'a negative line allowance amount',
+      {
+        lines: [
+          {
+            description: 'Widget',
+            quantity: 1,
+            unitPrice: 21,
+            lineTotal: 23,
+            allowances: [{ amount: -2, reason: 'Volume discount' }],
+          },
+        ],
+      },
+      /amount/,
+    ],
+  ])('rejects %s', async (_name, extra, field) => {
     const requests: Parameters<ConvertFn>[0][] = []
     const client = await connect(async (request, opts) => {
       requests.push(request)
@@ -332,19 +356,13 @@ describe('PolyDoc MCP server (in-memory round-trip)', () => {
     })
     const res = await client.callTool({
       name: 'polydoc_generate_einvoice',
-      arguments: {
-        html: '<h1>INV-7</h1>',
-        invoice: allowanceInvoice({
-          lines: [{ description: 'Widget', quantity: 1, unitPrice: 24, lineTotal: 24 }],
-          allowances: [{ amount: 1, reason: 'Early order', vatRate: 19 }],
-        }),
-      },
+      arguments: { html: '<h1>INV-7</h1>', invoice: allowanceInvoice(extra) },
     })
     expect(res.isError).toBe(true)
     const text = (res.content as Array<{ type: string; text?: string }>)
       .map((c) => c.text ?? '')
       .join(' ')
-    expect(text).toMatch(/vatCategoryCode/)
+    expect(text).toMatch(field)
     expect(requests).toHaveLength(0)
     await client.close()
   })

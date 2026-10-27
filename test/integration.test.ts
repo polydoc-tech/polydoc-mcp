@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 import { convert } from '../src/polydoc/client.js'
 import { buildRequestBody, type PolyDocParams } from '../src/polydoc/buildRequestBody.js'
@@ -94,6 +95,26 @@ describe.skipIf(!API_KEY)('PolyDoc live API (sandbox)', () => {
       html: '<h1>Invoice INV-SMOKE-1</h1>',
       eInvoiceStandard: 'zugferd',
       eInvoiceProfile: 'en16931',
+      invoice,
+      delivery: dl,
+    })
+    expect(res.kind).toBe('binary')
+    if (res.kind === 'binary') expect(res.contentType).toContain('application/pdf')
+    await space()
+  })
+
+  it('the shipped ZUGFeRD example, with allowances and charges, returns a hybrid PDF', async () => {
+    const example = JSON.parse(
+      await readFile(new URL('../examples/einvoice-zugferd.json', import.meta.url), 'utf8')
+    ) as { arguments: { html: string; standard: 'zugferd'; profile: string; invoice: Record<string, unknown> } }
+    const { html, standard, profile, invoice } = example.arguments
+    expect(invoice.charges).toBeDefined()
+    const res = await run({
+      operation: 'einvoice',
+      sourceType: 'html',
+      html,
+      eInvoiceStandard: standard,
+      eInvoiceProfile: profile,
       invoice,
       delivery: dl,
     })

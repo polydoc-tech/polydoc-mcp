@@ -194,13 +194,16 @@ const deliverToSchema = z.object({
 const lineAllowanceChargeSchema = z.object({
   amount: z
     .number()
+    .nonnegative()
     .describe('BT-136 (allowance) / BT-141 (charge). Never negative: the list it sits in gives the sign.'),
   baseAmount: z
     .number()
+    .nonnegative()
     .optional()
     .describe('Amount the percentage applies to (BT-137 / BT-142). Profile en16931 or extended only.'),
   percentage: z
     .number()
+    .nonnegative()
     .optional()
     .describe('e.g. 10 for 10 % (BT-138 / BT-143). Profile en16931 or extended only. amount is not computed from it.'),
   reason: z
@@ -218,10 +221,12 @@ const lineAllowanceChargeSchema = z.object({
 const documentAllowanceChargeSchema = z.object({
   amount: z
     .number()
+    .nonnegative()
     .describe('BT-92 (allowance) / BT-99 (charge). Never negative: the list it sits in gives the sign.'),
-  baseAmount: z.number().optional().describe('Amount the percentage applies to (BT-93 / BT-100).'),
+  baseAmount: z.number().nonnegative().optional().describe('Amount the percentage applies to (BT-93 / BT-100).'),
   percentage: z
     .number()
+    .nonnegative()
     .optional()
     .describe('e.g. 2 for 2 % (BT-94 / BT-101). amount is not computed from it.'),
   reason: z
@@ -232,7 +237,7 @@ const documentAllowanceChargeSchema = z.object({
     .string()
     .optional()
     .describe('UNTDID 5189 code for an allowance, e.g. "95" (discount); UNTDID 7161 for a charge, e.g. "FC" (freight). BT-98 / BT-105.'),
-  vatCategoryCode: z.string().describe('VAT category, e.g. "S" (BT-95 / BT-102).'),
+  vatCategoryCode: z.string().min(1).describe('VAT category, e.g. "S" (BT-95 / BT-102).'),
   vatRate: z
     .number()
     .optional()
