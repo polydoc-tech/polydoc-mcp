@@ -16,9 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # No registry-url: setup-node v7 then writes an .npmrc holding ${NODE_AUTH_TOKEN} and no longer
-      # exports a dummy value, and yarn 1 refuses an unset variable in its config. npm's Trusted
-      # Publishing (OIDC) needs no token and uses the default registry.
-      # https://github.com/actions/setup-node/pull/1558
+      # exports a dummy value (the "Breaking change" note of its v7 README), and yarn 1 refuses an
+      # unset variable in its config. npm's Trusted Publishing (OIDC) needs no token and uses the
+      # default registry.
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
