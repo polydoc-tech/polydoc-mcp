@@ -190,6 +190,55 @@ const deliverToSchema = z.object({
   address: deliveryAddressSchema.optional().describe('Deliver-to address (BG-15).'),
 })
 
+// BG-27 (line allowance) / BG-28 (line charge). The line's own VAT category and rate apply.
+const lineAllowanceChargeSchema = z.object({
+  amount: z
+    .number()
+    .describe('BT-136 (allowance) / BT-141 (charge). Never negative: the list it sits in gives the sign.'),
+  baseAmount: z
+    .number()
+    .optional()
+    .describe('Amount the percentage applies to (BT-137 / BT-142). Profile en16931 or extended only.'),
+  percentage: z
+    .number()
+    .optional()
+    .describe('e.g. 10 for 10 % (BT-138 / BT-143). Profile en16931 or extended only. amount is not computed from it.'),
+  reason: z
+    .string()
+    .optional()
+    .describe('Reason in words (BT-139 / BT-144). Send reason, reasonCode or both (BR-42, BR-44).'),
+  reasonCode: z
+    .string()
+    .optional()
+    .describe('UNTDID 5189 code for an allowance, e.g. "95" (discount); UNTDID 7161 for a charge, e.g. "FC" (freight). BT-140 / BT-145.'),
+})
+
+// BG-20 (document allowance) / BG-21 (document charge). Unlike a line group it names its own VAT
+// category (BR-32, BR-37).
+const documentAllowanceChargeSchema = z.object({
+  amount: z
+    .number()
+    .describe('BT-92 (allowance) / BT-99 (charge). Never negative: the list it sits in gives the sign.'),
+  baseAmount: z.number().optional().describe('Amount the percentage applies to (BT-93 / BT-100).'),
+  percentage: z
+    .number()
+    .optional()
+    .describe('e.g. 2 for 2 % (BT-94 / BT-101). amount is not computed from it.'),
+  reason: z
+    .string()
+    .optional()
+    .describe('Reason in words (BT-97 / BT-104). Send reason, reasonCode or both (BR-33, BR-38).'),
+  reasonCode: z
+    .string()
+    .optional()
+    .describe('UNTDID 5189 code for an allowance, e.g. "95" (discount); UNTDID 7161 for a charge, e.g. "FC" (freight). BT-98 / BT-105.'),
+  vatCategoryCode: z.string().describe('VAT category, e.g. "S" (BT-95 / BT-102).'),
+  vatRate: z
+    .number()
+    .optional()
+    .describe('VAT rate in percent (BT-96 / BT-103). Required unless vatCategoryCode is "O", which must not carry one (BR-O-06, BR-O-07).'),
+})
+
 const invoiceLineSchema = z.object({
   description: z.string().describe('Item name (BT-153).'),
   buyerItemId: z
@@ -199,9 +248,19 @@ const invoiceLineSchema = z.object({
   quantity: z.number(),
   unitCode: z.string().optional(),
   unitPrice: z.number(),
-  lineTotal: z.number(),
+  lineTotal: z
+    .number()
+    .describe("quantity x unitPrice, minus this line's allowances, plus its charges (BT-131). On a line with either, more than 0.02 off is rejected with 400."),
   vatRate: z.number().optional(),
   vatCategoryCode: z.string().optional().describe('e.g. "S" for standard rate.'),
+  allowances: z
+    .array(lineAllowanceChargeSchema)
+    .optional()
+    .describe('Line allowances (BG-27), e.g. a volume discount. Subtract them in lineTotal.'),
+  charges: z
+    .array(lineAllowanceChargeSchema)
+    .optional()
+    .describe('Line charges (BG-28), e.g. packaging. Add them in lineTotal.'),
 })
 
 const taxSummarySchema = z.object({
@@ -241,10 +300,22 @@ export const invoiceSchema = z
     taxSummary: z
       .array(taxSummarySchema)
       .optional()
-      .describe('Recommended: VAT breakdown so totals validate.'),
+      .describe(
+        'Recommended: VAT breakdown so totals validate. Required with document-level allowances or charges, and each taxableAmount must include them.',
+      ),
     paymentTerms: z.string().optional(),
     paymentMeans: paymentMeansSchema.optional(),
-    totalNetAmount: z.number(),
+    allowances: z
+      .array(documentAllowanceChargeSchema)
+      .optional()
+      .describe('Document-level allowances (BG-20), e.g. an early-order discount. Subtract them in totalNetAmount. Requires taxSummary.'),
+    charges: z
+      .array(documentAllowanceChargeSchema)
+      .optional()
+      .describe('Document-level charges (BG-21), e.g. freight. Add them in totalNetAmount. Requires taxSummary.'),
+    totalNetAmount: z
+      .number()
+      .describe('Sum of lineTotal, minus the document-level allowances, plus the document-level charges (BT-109).'),
     totalTaxAmount: z.number(),
     totalGrossAmount: z.number().describe('Must equal totalNetAmount + totalTaxAmount.'),
     note: z.string().optional(),

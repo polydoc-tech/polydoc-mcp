@@ -1,6 +1,6 @@
 {
   "tool": "polydoc_generate_einvoice",
-  "description": "Generate a ZUGFeRD / EN 16931 hybrid PDF. This invoice is complete: it has paymentTerms (BR-CO-25), a seller taxId for VAT category S, a taxSummary, and totals where net + tax = gross.",
+  "description": "Generate a ZUGFeRD / EN 16931 hybrid PDF. This invoice is complete: it has paymentTerms (BR-CO-25), a seller taxId for VAT category S, a taxSummary, and totals where net + tax = gross. The line carries a 10 % allowance, subtracted in lineTotal, and the invoice a freight charge, added in totalNetAmount and in the taxable amount.",
   "arguments": {
     "html": "<h1>Invoice INV-2026-001</h1><p>Acme GmbH to Buyer SARL</p>",
     "standard": "zugferd",
@@ -35,16 +35,22 @@
           "buyerItemId": "ART-4711",
           "quantity": 2,
           "unitPrice": 10,
-          "lineTotal": 20,
+          "lineTotal": 18,
           "vatRate": 19,
-          "vatCategoryCode": "S"
+          "vatCategoryCode": "S",
+          "allowances": [
+            { "amount": 2, "baseAmount": 20, "percentage": 10, "reason": "Volume discount", "reasonCode": "95" }
+          ]
         }
       ],
-      "taxSummary": [{ "categoryCode": "S", "rate": 19, "taxableAmount": 20, "taxAmount": 3.8 }],
+      "charges": [
+        { "amount": 5, "reason": "Freight", "reasonCode": "FC", "vatCategoryCode": "S", "vatRate": 19 }
+      ],
+      "taxSummary": [{ "categoryCode": "S", "rate": 19, "taxableAmount": 23, "taxAmount": 4.37 }],
       "paymentTerms": "Net 30 days",
-      "totalNetAmount": 20,
-      "totalTaxAmount": 3.8,
-      "totalGrossAmount": 23.8
+      "totalNetAmount": 23,
+      "totalTaxAmount": 4.37,
+      "totalGrossAmount": 27.37
     }
   }
 }
