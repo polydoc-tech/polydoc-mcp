@@ -270,6 +270,103 @@ describe('PolyDoc MCP server (in-memory round-trip)', () => {
     await client.close()
   })
 
+  const allowanceInvoice = (extra: Record<string, unknown>) => ({
+    number: 'INV-6',
+    issueDate: '2026-10-27',
+    dueDate: '2026-11-26',
+    currencyCode: 'EUR',
+    seller: {
+      name: 'Acme GmbH',
+      address: { line1: 'Hauptstr. 1', city: 'Berlin', postalCode: '10115', countryCode: 'DE' },
+      taxId: 'DE123456789',
+    },
+    buyer: {
+      name: 'Buyer SARL',
+      address: { line1: 'Rue 2', city: 'Paris', postalCode: '75001', countryCode: 'FR' },
+    },
+    taxSummary: [{ categoryCode: 'S', rate: 19, taxableAmount: 23, taxAmount: 4.37 }],
+    totalNetAmount: 23,
+    totalTaxAmount: 4.37,
+    totalGrossAmount: 27.37,
+    ...extra,
+  })
+
+  it('forwards line and document allowances and charges (BG-20, BG-21, BG-27, BG-28)', async () => {
+    const requests: Parameters<ConvertFn>[0][] = []
+    const client = await connect(async (request, opts) => {
+      requests.push(request)
+      return fakeConvert(request, opts)
+    })
+    const lines = [
+      {
+        description: 'Widget',
+        quantity: 2,
+        unitPrice: 10,
+        lineTotal: 19,
+        vatRate: 19,
+        vatCategoryCode: 'S',
+        allowances: [{ amount: 2, baseAmount: 20, percentage: 10, reason: 'Volume discount', reasonCode: '95' }],
+        charges: [{ amount: 1, reason: 'Packaging', reasonCode: 'ABL' }],
+      },
+    ]
+    const allowances = [{ amount: 1, reason: 'Early order', vatCategoryCode: 'S', vatRate: 19 }]
+    const charges = [{ amount: 5, reasonCode: 'FC', vatCategoryCode: 'S', vatRate: 19 }]
+    const res = await client.callTool({
+      name: 'polydoc_generate_einvoice',
+      arguments: { html: '<h1>INV-6</h1>', invoice: allowanceInvoice({ lines, allowances, charges }) },
+    })
+    expect(res.isError).toBeFalsy()
+    expect(requests).toHaveLength(1)
+    const invoice = (requests[0].body as { eInvoice: { invoice: Record<string, unknown> } }).eInvoice.invoice
+    expect(invoice.lines).toEqual(lines)
+    expect(invoice.allowances).toEqual(allowances)
+    expect(invoice.charges).toEqual(charges)
+    await client.close()
+  })
+
+  it.each([
+    [
+      'a document-level allowance without vatCategoryCode (BR-32)',
+      {
+        lines: [{ description: 'Widget', quantity: 1, unitPrice: 24, lineTotal: 24 }],
+        allowances: [{ amount: 1, reason: 'Early order', vatRate: 19 }],
+      },
+      /vatCategoryCode/,
+    ],
+    [
+      'a negative line allowance amount',
+      {
+        lines: [
+          {
+            description: 'Widget',
+            quantity: 1,
+            unitPrice: 21,
+            lineTotal: 23,
+            allowances: [{ amount: -2, reason: 'Volume discount' }],
+          },
+        ],
+      },
+      /amount/,
+    ],
+  ])('rejects %s', async (_name, extra, field) => {
+    const requests: Parameters<ConvertFn>[0][] = []
+    const client = await connect(async (request, opts) => {
+      requests.push(request)
+      return fakeConvert(request, opts)
+    })
+    const res = await client.callTool({
+      name: 'polydoc_generate_einvoice',
+      arguments: { html: '<h1>INV-7</h1>', invoice: allowanceInvoice(extra) },
+    })
+    expect(res.isError).toBe(true)
+    const text = (res.content as Array<{ type: string; text?: string }>)
+      .map((c) => c.text ?? '')
+      .join(' ')
+    expect(text).toMatch(field)
+    expect(requests).toHaveLength(0)
+    await client.close()
+  })
+
   it('rejects the retired minimum profile', async () => {
     const client = await connect()
     const res = await client.callTool({
