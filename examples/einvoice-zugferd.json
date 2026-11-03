@@ -1,6 +1,6 @@
 {
   "tool": "polydoc_generate_einvoice",
-  "description": "Generate a ZUGFeRD / EN 16931 hybrid PDF. This invoice is complete: it has paymentTerms (BR-CO-25), a seller taxId for VAT category S, a taxSummary, and totals where net + tax = gross. The line carries a 10 % allowance, subtracted in lineTotal, and the invoice a freight charge, added in totalNetAmount and in the taxable amount.",
+  "description": "Generate a ZUGFeRD / EN 16931 hybrid PDF. This invoice is complete: it has paymentTerms (BR-CO-25), a seller taxId for VAT category S, a taxSummary, and totals where net + tax = gross. The line carries a 10 % allowance, subtracted in lineTotal, and the invoice a freight charge, added in totalNetAmount and in the taxable amount. salesOrderReference (BT-14) reaches the XML because the profile is en16931.",
   "arguments": {
     "html": "<h1>Invoice INV-2026-001</h1><p>Acme GmbH to Buyer SARL</p>",
     "standard": "zugferd",
@@ -13,6 +13,7 @@
       "dueDate": "2026-07-04",
       "deliveryDate": "2026-06-02",
       "currencyCode": "EUR",
+      "salesOrderReference": "SO-2026-0815",
       "seller": {
         "name": "Acme GmbH",
         "address": { "line1": "Hauptstr. 1", "city": "Berlin", "postalCode": "10115", "countryCode": "DE" },
