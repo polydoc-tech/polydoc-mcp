@@ -123,6 +123,42 @@ describe.skipIf(!API_KEY)('PolyDoc live API (sandbox)', () => {
     await space()
   })
 
+  async function creditNoteFromExample(typeCode: string) {
+    const example = JSON.parse(
+      await readFile(new URL('../examples/einvoice-zugferd.json', import.meta.url), 'utf8')
+    ) as { arguments: { html: string; standard: 'zugferd'; profile: string; invoice: Record<string, unknown> } }
+    const { html, standard, profile, invoice } = example.arguments
+    return run({
+      operation: 'einvoice',
+      sourceType: 'html',
+      html,
+      eInvoiceStandard: standard,
+      eInvoiceProfile: profile,
+      invoice: {
+        ...invoice,
+        number: 'CN-2026-001',
+        typeCode,
+        precedingInvoiceReference: { id: invoice.number, issueDate: invoice.issueDate },
+      },
+      delivery: dl,
+    })
+  }
+
+  it('a credit note (381) with a preceding invoice reference returns a hybrid PDF', async () => {
+    const res = await creditNoteFromExample('381')
+    expect(res.kind).toBe('binary')
+    if (res.kind === 'binary') expect(res.contentType).toContain('application/pdf')
+    await space()
+  })
+
+  it('a typeCode outside the EN 16931 list is refused with 422 naming BR-CL-01', async () => {
+    await expect(creditNoteFromExample('999')).rejects.toMatchObject({
+      status: 422,
+      message: expect.stringMatching(/BR-CL-01/),
+    })
+    await space()
+  })
+
   it('credential check (minimal sandbox screenshot) succeeds', async () => {
     const res = await run({
       operation: 'screenshot',

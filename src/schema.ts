@@ -190,6 +190,13 @@ const deliverToSchema = z.object({
   address: deliveryAddressSchema.optional().describe('Deliver-to address (BG-15).'),
 })
 
+// BG-3. id is required here because BR-55 requires BT-25 in every BG-3; the API answers a date
+// without an id with 400.
+const precedingInvoiceReferenceSchema = z.object({
+  id: z.string().min(1).describe('Number of the invoice this document credits or corrects (BT-25).'),
+  issueDate: z.string().optional().describe('Issue date of that invoice (BT-26), ISO date YYYY-MM-DD.'),
+})
+
 // BG-27 (line allowance) / BG-28 (line charge). The line's own VAT category and rate apply.
 const lineAllowanceChargeSchema = z.object({
   amount: z
@@ -286,6 +293,13 @@ const paymentMeansSchema = z.object({
 export const invoiceSchema = z
   .object({
     number: z.string(),
+    typeCode: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        'Document type code (BT-3, UNTDID 1001): "381" for a credit note, "384" for a corrected invoice. "380" (commercial invoice) when omitted. A code outside the EN 16931 list is rejected with 422 (BR-CL-01). Not the same field as paymentMeans.typeCode. unitPrice must not be negative on a credit note either (BR-27).',
+      ),
     issueDate: z.string().describe('ISO date, YYYY-MM-DD.'),
     dueDate: z
       .string()
@@ -329,6 +343,13 @@ export const invoiceSchema = z
       .optional()
       .describe('Buyer reference (BT-10), e.g. the Leitweg-ID for German public-sector invoices.'),
     orderReference: z.string().optional().describe('Purchase order number (BT-13).'),
+    salesOrderReference: z
+      .string()
+      .optional()
+      .describe("The seller's own sales order number (BT-14). Reaches the XML only with profile en16931 or extended."),
+    precedingInvoiceReference: precedingInvoiceReferenceSchema
+      .optional()
+      .describe('The invoice that a credit note or corrected invoice refers to (BG-3). Reaches the XML at every profile.'),
   })
   .describe('Structured invoice data embedded as ZUGFeRD / Factur-X XML.')
 

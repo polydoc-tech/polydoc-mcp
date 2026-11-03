@@ -367,6 +367,70 @@ describe('PolyDoc MCP server (in-memory round-trip)', () => {
     await client.close()
   })
 
+  const creditNoteLines = [
+    { description: 'Widget', quantity: 1, unitPrice: 23, lineTotal: 23, vatRate: 19, vatCategoryCode: 'S' },
+  ]
+
+  it('forwards typeCode (BT-3), precedingInvoiceReference (BG-3) and salesOrderReference (BT-14)', async () => {
+    const requests: Parameters<ConvertFn>[0][] = []
+    const client = await connect(async (request, opts) => {
+      requests.push(request)
+      return fakeConvert(request, opts)
+    })
+    const res = await client.callTool({
+      name: 'polydoc_generate_einvoice',
+      arguments: {
+        html: '<h1>CN-1</h1>',
+        invoice: allowanceInvoice({
+          lines: creditNoteLines,
+          typeCode: '381',
+          precedingInvoiceReference: { id: 'INV-6', issueDate: '2026-10-27' },
+          salesOrderReference: 'SO-2026-0815',
+          paymentMeans: { typeCode: '58' },
+        }),
+      },
+    })
+    expect(res.isError).toBeFalsy()
+    expect(requests).toHaveLength(1)
+    const invoice = (requests[0].body as { eInvoice: { invoice: Record<string, unknown> } }).eInvoice.invoice
+    expect(invoice.typeCode).toBe('381')
+    expect(invoice.precedingInvoiceReference).toEqual({ id: 'INV-6', issueDate: '2026-10-27' })
+    expect(invoice.salesOrderReference).toBe('SO-2026-0815')
+    expect(invoice.paymentMeans).toEqual({ typeCode: '58' })
+    await client.close()
+  })
+
+  it.each([
+    ['an empty typeCode', { typeCode: '' }, /typeCode/],
+    [
+      'a precedingInvoiceReference without id (BR-55)',
+      { precedingInvoiceReference: { issueDate: '2026-10-27' } },
+      /precedingInvoiceReference\.id/,
+    ],
+    [
+      'a precedingInvoiceReference with an empty id',
+      { precedingInvoiceReference: { id: '' } },
+      /precedingInvoiceReference\.id/,
+    ],
+  ])('rejects %s', async (_name, extra, field) => {
+    const requests: Parameters<ConvertFn>[0][] = []
+    const client = await connect(async (request, opts) => {
+      requests.push(request)
+      return fakeConvert(request, opts)
+    })
+    const res = await client.callTool({
+      name: 'polydoc_generate_einvoice',
+      arguments: { html: '<h1>CN-2</h1>', invoice: allowanceInvoice({ lines: creditNoteLines, ...extra }) },
+    })
+    expect(res.isError).toBe(true)
+    const text = (res.content as Array<{ type: string; text?: string }>)
+      .map((c) => c.text ?? '')
+      .join(' ')
+    expect(text).toMatch(field)
+    expect(requests).toHaveLength(0)
+    await client.close()
+  })
+
   it('rejects the retired minimum profile', async () => {
     const client = await connect()
     const res = await client.callTool({
