@@ -298,7 +298,7 @@ export const invoiceSchema = z
       .min(1)
       .optional()
       .describe(
-        'Document type code (BT-3, UNTDID 1001): "381" for a credit note, "384" for a corrected invoice. "380" (commercial invoice) when omitted. A code outside the EN 16931 list is rejected with 422 (BR-CL-01). Not the same field as paymentMeans.typeCode. A credit note keeps unitPrice positive (BR-27).',
+        'Document type code (BT-3, UNTDID 1001): "381" for a credit note, "384" for a corrected invoice. "380" (commercial invoice) when omitted. A code outside the EN 16931 list is rejected with 422 (BR-CL-01). Not the same field as paymentMeans.typeCode. unitPrice must not be negative on a credit note either (BR-27).',
       ),
     issueDate: z.string().describe('ISO date, YYYY-MM-DD.'),
     dueDate: z

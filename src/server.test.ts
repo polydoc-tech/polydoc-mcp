@@ -386,6 +386,7 @@ describe('PolyDoc MCP server (in-memory round-trip)', () => {
           typeCode: '381',
           precedingInvoiceReference: { id: 'INV-6', issueDate: '2026-10-27' },
           salesOrderReference: 'SO-2026-0815',
+          paymentMeans: { typeCode: '58' },
         }),
       },
     })
@@ -395,7 +396,7 @@ describe('PolyDoc MCP server (in-memory round-trip)', () => {
     expect(invoice.typeCode).toBe('381')
     expect(invoice.precedingInvoiceReference).toEqual({ id: 'INV-6', issueDate: '2026-10-27' })
     expect(invoice.salesOrderReference).toBe('SO-2026-0815')
-    expect((invoice.paymentMeans as Record<string, unknown> | undefined)?.typeCode).toBeUndefined()
+    expect(invoice.paymentMeans).toEqual({ typeCode: '58' })
     await client.close()
   })
 
