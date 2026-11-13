@@ -101,7 +101,6 @@ Worked tool inputs for each angle live in [`examples/`](./examples): a branded P
 - `yarn lint`
 - `yarn test` - unit tests (request builder, output jail, tool handlers) and an in-memory MCP round-trip
 - `POLYDOC_API_KEY=your-key yarn test:integration` - live smoke tests against the sandbox
-- `yarn scrub:check` - check for em-dashes in source and docs
 
 Run the built server directly for a quick check:
 
