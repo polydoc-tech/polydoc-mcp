@@ -29,6 +29,7 @@ jobs:
       - run: yarn typecheck
       - run: yarn build
       - run: yarn test
+      # release.yml runs a copy of this step before it publishes.
       - name: CHANGELOG.md has a heading for the package.json version
         run: |
           v="$(node -p "require('./package.json').version")"

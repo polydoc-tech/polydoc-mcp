@@ -53,11 +53,11 @@ jobs:
     if: needs.gate.outputs.release == 'true'
     runs-on: ubuntu-latest # Trusted Publishing requires a cloud-hosted runner
     timeout-minutes: 15
-    # One release at a time, never cancelled midway: two tags pushed together would otherwise
-    # publish in parallel and finish in either order. GitHub keeps one waiting job per group,
-    # so a third tag cancels the waiting one; re-run it. On this job and not the workflow: a
-    # job its `if` skips joins no group, so a dispatch on a branch cannot cancel a waiting
-    # release.
+    # One publish at a time, never cancelled midway. GitHub keeps one waiting job per group,
+    # so a third tag cancels the waiting one; re-run it. The group does not fix the order: of
+    # two tags pushed together, either can publish last and take npm's `latest` dist-tag. On
+    # this job and not the workflow: a job its `if` skips joins no group, so a dispatch on a
+    # branch cannot cancel a waiting release.
     concurrency:
       group: ${{ github.workflow }}
       cancel-in-progress: false
@@ -95,26 +95,8 @@ jobs:
           # No dependency cache in a publishing job: a poisoned cache would ship.
           package-manager-cache: false
 
-      # Trusted Publishing + automatic provenance need npm >= 11.5.1. Pinned, not @latest,
-      # so a new npm release reaches a publish only through a reviewed bump.
-      - name: Upgrade npm
-        # renovate: datasource=npm depName=npm
-        run: npm install -g npm@12.2.3
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Build
-        run: yarn build
-
-      - name: Typecheck
-        run: yarn typecheck
-
-      - name: Lint
-        run: yarn lint
-
-      - name: Test
-        run: yarn test
+      # The checks that need no install come first: a refused tag fails in seconds, and no
+      # dependency's install script has run in a job that can mint a publish token.
 
       # server.json is the MCP Registry entry, and it names the npm version it lists.
       - name: package.json and server.json versions match the tag
@@ -137,6 +119,27 @@ jobs:
             echo "::error::CHANGELOG.md has no '## $v - <date>' heading"
             exit 1
           }
+
+      # Trusted Publishing + automatic provenance need npm >= 11.5.1. Pinned, not @latest,
+      # so a new npm release reaches a publish only through a reviewed bump.
+      - name: Upgrade npm
+        # renovate: datasource=npm depName=npm
+        run: npm install -g npm@12.2.3
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Test
+        run: yarn test
 
       - name: Publish to npm
         run: npm publish
