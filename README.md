@@ -99,6 +99,7 @@ Worked tool inputs for each angle live in [`examples/`](./examples): a branded P
 - `yarn install`
 - `yarn build` - compile to `dist/`
 - `yarn lint`
+- `yarn typecheck` - tsc over `src/` and `test/`
 - `yarn test` - unit tests (request builder, output jail, tool handlers) and an in-memory MCP round-trip
 - `POLYDOC_API_KEY=your-key yarn test:integration` - live smoke tests against the sandbox
 
