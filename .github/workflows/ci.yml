@@ -9,5 +9,48 @@ permissions:
   contents: read
 
 jobs:
-  public-scrub:
-    uses: polydoc-tech/.github/.github/workflows/public-scrub.yml@main
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        # 20 is the engines floor, 26 the current LTS.
+        node-version: ['20', '26']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn build
+      - run: yarn test
+      - name: CHANGELOG.md has a heading for the package.json version
+        run: |
+          v="$(node -p "require('./package.json').version")"
+          grep -qE "^## ${v//./\\.} - [0-9]{4}-[0-9]{2}-[0-9]{2}\$" CHANGELOG.md || {
+            echo "::error::CHANGELOG.md has no '## $v - <date>' heading"
+            exit 1
+          }
+
+  guard:
+    uses: polydoc-tech/.github/.github/workflows/guard.yml@f965127030d3124e119f4bd012e32f0768de2441 # main
+    with:
+      source-paths: src/
+
+  # Branch protection requires this one check instead of each leg of the `test` matrix, so
+  # adding or dropping a version needs no change there. It passes only when every leg passed.
+  ci-ok:
+    if: ${{ always() }}
+    needs: [test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every leg of the test matrix passed
+        env:
+          RESULT: ${{ needs.test.result }}
+        run: test "$RESULT" = success
