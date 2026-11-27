@@ -14,13 +14,6 @@ on:
       - 'v*.*.*'
   workflow_dispatch:
 
-# One release at a time, never cancelled midway: two tags pushed together would otherwise
-# publish in parallel and finish in either order. GitHub keeps one waiting run per group, so
-# a third tag cancels the waiting one; re-run it.
-concurrency:
-  group: ${{ github.workflow }}
-  cancel-in-progress: false
-
 # Per job, not here: zizmor's excessive-permissions audit refuses a workflow-wide
 # `id-token: write` once more than one job could mint the token.
 permissions:
@@ -60,6 +53,14 @@ jobs:
     if: needs.gate.outputs.release == 'true'
     runs-on: ubuntu-latest # Trusted Publishing requires a cloud-hosted runner
     timeout-minutes: 15
+    # One publish at a time, never cancelled midway. GitHub keeps one waiting job per group,
+    # so a third tag cancels the waiting one; re-run it. The group does not fix the order: of
+    # two tags pushed together, either can publish last and take npm's `latest` dist-tag. On
+    # this job and not the workflow: a job its `if` skips joins no group, so a dispatch on a
+    # branch cannot cancel a waiting release.
+    concurrency:
+      group: ${{ github.workflow }}
+      cancel-in-progress: false
     permissions:
       contents: read
       id-token: write # required for npm Trusted Publishing (OIDC)
@@ -94,6 +95,31 @@ jobs:
           # No dependency cache in a publishing job: a poisoned cache would ship.
           package-manager-cache: false
 
+      # The checks that need no install come first, so a refused tag fails in seconds, before
+      # any dependency's install script runs.
+
+      # server.json is the MCP Registry entry, and it names the npm version it lists.
+      - name: package.json and server.json versions match the tag
+        run: |
+          want="${GITHUB_REF_NAME#v}"
+          for field in "package.json .version" "server.json .version" "server.json .packages[0].version"; do
+            have="$(jq -r "${field#* }" "${field%% *}")"
+            test "$want" = "$have" || {
+              echo "::error::tag says $want, $field says $have"
+              exit 1
+            }
+          done
+
+      # The same check as in ci.yml. A tag can sit on a main commit whose CI went red, and this
+      # job does not read that run.
+      - name: CHANGELOG.md has a heading for the package.json version
+        run: |
+          v="$(node -p "require('./package.json').version")"
+          grep -qE "^## ${v//./\\.} - [0-9]{4}-[0-9]{2}-[0-9]{2}\$" CHANGELOG.md || {
+            echo "::error::CHANGELOG.md has no '## $v - <date>' heading"
+            exit 1
+          }
+
       # Trusted Publishing + automatic provenance need npm >= 11.5.1. Pinned, not @latest,
       # so a new npm release reaches a publish only through a reviewed bump.
       - name: Upgrade npm
@@ -114,18 +140,6 @@ jobs:
 
       - name: Test
         run: yarn test
-
-      # server.json is the MCP Registry entry, and it names the npm version it lists.
-      - name: package.json and server.json versions match the tag
-        run: |
-          want="${GITHUB_REF_NAME#v}"
-          for field in "package.json .version" "server.json .version" "server.json .packages[0].version"; do
-            have="$(jq -r "${field#* }" "${field%% *}")"
-            test "$want" = "$have" || {
-              echo "tag says $want, $field says $have"
-              exit 1
-            }
-          done
 
       - name: Publish to npm
         run: npm publish
