@@ -95,8 +95,8 @@ jobs:
           # No dependency cache in a publishing job: a poisoned cache would ship.
           package-manager-cache: false
 
-      # The checks that need no install come first: a refused tag fails in seconds, and no
-      # dependency's install script has run in a job that can mint a publish token.
+      # The checks that need no install come first, so a refused tag fails in seconds, before
+      # any dependency's install script runs.
 
       # server.json is the MCP Registry entry, and it names the npm version it lists.
       - name: package.json and server.json versions match the tag
